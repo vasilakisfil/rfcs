@@ -6,9 +6,35 @@
 
 ## Summary
 
-Introduce a block form `let` template helper to bind values and deprecate `with`.
+Deprecate the `with` helper and introduce a new `let` helper without the conditional behaviour.
 
 ## Motivation
+
+[RFC #200](https://github.com/emberjs/rfcs/pull/200) introduced the concept of the `let` helper,
+laying out the rationale for why it is a useful addition to Ember's templating system.
+It introduced both the block form of the helper, as well as the inline form.
+However, the inline form of `let`
+
+
+It also laid out the case for why `with`'s conditional behaviour is confusing.
+
+By conditional behaviour what is meant is that `with` is passed a falsey value,
+it will not render the content of the block.
+To quote RFC #200:
+
+> Whereas with will not render if it is passed an empty list, null, undefined, false, or an empty string. This counterintuitive behavior leads to nasty suprises and difficult to workaround situations.
+
+```handlebars
+{{#with (array) as |list|}}
+  {{!does not render}}
+  You'll never see me!
+{{/with}}
+```
+
+### Deprecating the `with` helper
+
+Why introduce a new helper? `with` has conditional semantics, which confused people.
+
 
 ### Introducing the block `let` helper
 
@@ -40,51 +66,81 @@ You are able to avoid needless repetition with the `let` helper:
 {{/let}}
 ```
 
-### Deprecating the `with` helper
-
-Why introduce a new helper? `with` has conditional semantics, which confused people.
-
 ## Detailed design
 
-> This is the bulk of the RFC. Explain the design in enough detail for somebody
-familiar with the framework to understand, and for somebody familiar with the
-implementation to implement. This should get into specifics and corner-cases,
-and include examples of how the feature is used. Any new terminology should be
-defined here.
+### Implementing `let`
+
+The `let` helper should be implemented as a built-in helper, with the following semantics:
+
+* Only the block form is available
+* The block is always rendered
+* Every positional argument passed to the helper is yielded back out in the same order
+* Inline form issues an error, linking users to documentation
+
+There already exists [an implementation in the codebase](https://github.com/emberjs/ember.js/blob/9536e137b9e1a39411b7fd4e8ca0e7fbb341ef17/packages/ember-glimmer/tests/integration/syntax/experimental-syntax-test.js#L6-L37) that could be used as a basis.
+
+### Deprecating `with`
 
 ## How We Teach This
 
-> What names and terminology work best for these concepts and why? How is this
-idea best presented? As a continuation of existing Ember patterns, or as a
-wholly new one?
+The introduction of the `let` helper brings no new concepts.
+It touched on the concepts of block helpers, how to pass arguments to them,
+and how to use block parameters (`as |foo|`), which should already be introduced in the literature.
 
-> Would the acceptance of this proposal mean the Ember guides must be
-re-organized or altered? Does it change how Ember is taught to new users
-at any level?
+The Guides already possess a section dedicated to Templates, with multiple mentions of helpers.
+`let` would likely be documented in the [Built-in Helpers](https://guides.emberjs.com/v2.17.0/templates/built-in-helpers/) guide alonside the others.
 
-> How should this feature be introduced and taught to existing Ember
-users?
+If this RFC is approved, the `let` will initially only support the block form.
+This means that only the following form is available for users:
+
+```handlebars
+{{#let 1 2 3 as |one two three|}}
+  A, B, C, easy as {{one}}, {{two}}, {{three}}
+```
+
+This could also be enforced by issuing a helpful error when `let` is used in the inline form.
 
 ## Drawbacks
 
-> Why should we *not* do this? Please consider the impact on teaching Ember,
-on the integration of this feature with other existing and planned features,
-on the impact of the API churn on existing apps, etc.
+As with the addition of any API, we will be increasing the cognitive load of learners and users,
+as it is one more piece of information to obtain and retain.
 
-> There are tradeoffs to choosing any path, please attempt to identify them here.
+The cost of learning this API is mitigated by the fact that its effects are very localized.
+It is a template helper, so it will only affect templates.
+It is not required for general usage of Ember, unlike something like `link-to`,
+so you can learn the helper at your own pace.
+And lastly, if you do use it or encounter it in code, only the markup inside the `{{#let}}{{/let}}` block is affected,
+making it easier to think about.
 
 ## Alternatives
 
-> What other designs have been considered? What is the impact of not doing this?
+### Adding named arguments to `with`
 
-> This section could also include prior art, that is, how other frameworks in the same domain have solved this problem.
+[RFC #202](https://github.com/emberjs/rfcs/pull/202) proposes to add named arguments to `with`.
+
+I feel it is less practical to add a new mode to the helper where it always renders,
+when its semantics are already confusing to users.
+The RFC #202 proposal also presents the problem of bringing back context-switching helpers,
+as it proposes omitting block arguments (`as |bar|` in `{{#with foo as |bar|}}`).
+
+### Remove the conditional behavior of `with`
+
+Making the `with` helper unconditionally render the block would be a major breaking change of its semantics,
+and would likely affect existing applications in insidious ways.
+For this reason, I reject this alternative out of the gate.
 
 ## Unresolved questions
 
-> Optional, but suggested for first drafts. What parts of the design are still
-TBD?
+### Inline form
 
-### Named arguments and named block arguments
+As mentioned, this RFC was meant to focus on the block form of the `let` helper.
+As such, the discussion and design of the inline form of `let` should be left for a subsequent RFC.
 
-???
+### `if-let`, `let*` and others
 
+RFC #200 also proposes the introduction of `if-let` to mimic the behaviour of `with`,
+but with a more explicit name, and `let*` to allow bindings to happen in sequence,
+thus being able to use previously declared bindings in the same `let` (`{{let* a=1 b=(sum a 5)}}`).
+
+These could also be addressed in subsequent RFCs,
+focused on the specificities of each proposal.
