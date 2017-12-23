@@ -1,3 +1,7 @@
+---
+tags: ember
+---
+
 - Start Date: 2014-08-18
 - RFC PR: https://github.com/emberjs/rfcs/pull/3
 - Issues:

@@ -1,3 +1,7 @@
+---
+tags: ember
+---
+
 - Start Date: 2014-12-03
 - RFC PR: https://github.com/emberjs/rfcs/pull/15
 - Ember Issue: This RFC is implemented over many Ember PRs
@@ -587,7 +591,7 @@ In order to do that refactoring, several things will change:
 * In addition to the asynchronous `model` hook in routes, routes will
   also be able to define a `attrs` hook, which can return additional
   asynchronous data that should be provided to the component.
-* Routeable Components should be placed in a "pod" naming convention. For 
+* Routeable Components should be placed in a "pod" naming convention. For
   example, the component for the `blog-post` route would be
   `app/blog-post/component.js`.
 

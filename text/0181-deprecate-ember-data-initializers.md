@@ -1,3 +1,7 @@
+---
+tags: ember
+---
+
 - Start Date: 2016-11-22
 - RFC PR: (leave this empty)
 - Ember Issue: (leave this empty)

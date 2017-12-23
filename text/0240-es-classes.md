@@ -1,3 +1,7 @@
+---
+tags: ember
+---
+
 - Start Date: 2017-07-28
 - RFC PR: [#240](https://github.com/emberjs/rfcs/pull/240)
 - Ember Issue: (leave this empty)
