@@ -1,3 +1,7 @@
+---
+tags: ember-cli
+---
+
 - Start Date: 2015-07-10
 - RFC PR: [#20](https://github.com/ember-cli/rfcs/pull/20)
 
