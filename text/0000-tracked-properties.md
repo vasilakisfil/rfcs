@@ -55,6 +55,8 @@ While constructing virtual DOM is fast and applying diff updates can be optimize
 
 Tracked properties intend to take a hybrid approach to strike a balance between simplicity in the programming model and performance.
 
+#### ------- TOM SHOULD ADD MORE HERE --------
+
 ## Detailed design
 
 Below specifies the `@tracked` decorator and the behavior of data within the system.
@@ -192,6 +194,10 @@ There are 2 key differentiators with the tracked implementation:
 
 We are able to elide the dependent key enumeration here because we are able to detect that when we access `fullName` we also access `firstName` and `lastName`. Therefore we can construct a "cache key" for `fullName` that is the combination of `firstName` and `lastName`'s "cache keys". This mens if either `firstName` or `lastName` update, then `fullName` needs to be recomputed the next time it is accessed. These are the exact semantics of Ember's `computed`.
 
+#### Observability
+
+TODO!
+
 #### Arrays
 
 Historically, Ember has used the [`[]` and `@each` mircosyntaxes](https://guides.emberjs.com/release/object-model/computed-properties-and-aggregate-data/) that allowed you create computed property based on the contents of arrays. For example:
@@ -312,21 +318,18 @@ export default class extends Component {
 
 ## How we teach this
 
-Tracked properties are intended to simplify the programming model by removing concepts. For instance people familiar with JavaScript do not need to learn a propritary setter method for updating data. They also don't need to learn about dependent keys and remembering to properly enumerate them. By in large this should reduce the amount of concepts that we need to teach.
-
-It also allows us to redirect people things like Mozilla's documentation if people are not familiar with things like accessor methods.
+Tracked properties are intended to simplify the programming model by removing concepts. For instance people familiar with JavaScript do not need to learn a propritary setter method for updating data. They also don't need to learn about dependent keys and remembering to properly enumerate them. It also allows us to redirect people things like Mozilla's documentation if people are not familiar with things like accessor methods.
 
 ## Drawbacks
 
 With tracked properties we are giving up some fine grained control over observing when data has changed for array mutations. As noted in the design section, arrays would need to use a immutable pattern for having their changes reflected through out the system.
 
+This solution also pushes the control of what is and is not observable by the system out to the developer. This means that developers needs to manually mark the properties that can change. While this is more typing for the developer it allows us to clearly seperate out static and dynamic data. It also means that Ember only has to do the booking keeping for the explicity annotated properties.
+
 ## Alternatives
 
-> What other designs have been considered? What is the impact of not doing this?
-
-> This section could also include prior art, that is, how other frameworks in the same domain have solved this problem.
+We could continue to use `computed` and just make a decorator form of it. It is possible to make `computed` infer it's dependencies just like `tracked`. The downside here is that we would then have to deprecate the array microsyntaxes from `computed` as those cases are not observable through the auto tracking functionality. This would likely create unnecessary deprecation noise and it's likely a better option to provide `tracked` that can be opted into.
 
 ## Unresolved questions
 
-> Optional, but suggested for first drafts. What parts of the design are still
 TBD?
