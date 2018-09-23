@@ -51,7 +51,7 @@ However, web users expect pages to render near instantly. Setting up observers a
 
 The tradeoff is that updates require re-evaluating the component tree to figure out how the DOM needs to be mutated. Essentially, that means doing a full render pass on a component and all of its children every time a property changes.
 
-While constructing virtual DOM is fast and applying diff updates can be optimized, it's far from instanteous, particularly as the size of your application grows. As your virtual DOM-based app grows, you will have to do more work to make sure it stays performant.
+While constructing virtual DOM is fast and applying diff updates can be optimized, it's far from instantaneous, particularly as the size of your application grows. As your virtual DOM-based app grows, you will have to do more work to make sure it stays performant.
 
 Tracked properties intend to take a hybrid approach to strike a balance between simplicity in the programming model and performance.
 
@@ -224,7 +224,7 @@ export default Component.extend({
 
 While this did allow you to create computed properties that were aware of arrays, it effectievly meant that we had an explosion of extra book keeping that we needed to perfom. Furthermore, this microsyntax is something that is something that developers must learn and at times can get wrong leading to further runtime issues.
 
-With tracked properties we have explicity chosen to adopt the immutable pattern for dealing with arrays. In practice what this means is:
+With tracked properties we have explicitly chosen to adopt the immutable pattern for dealing with arrays. In practice what this means is:
 
 1. Save the array as an "atom" in a tracked property on the object.
 2. To change state, replace the root "atom" with a new copy of the array.
@@ -258,23 +258,67 @@ export default class extends Component {
 
 In the example above, calling `addItem` replaces the entire array with the new item added as the last item in the array. Setting `cartItems` to the new array will cause both `incomplete` and `titles` to be recomputed the next time they are accessed.
 
-## Interoprability
+## Interoperability
 
-Since Ember 2.10 Ember has been utilizing references and validators.
+Since Ember 2.10 Ember has been utilizing references and validators to perform change tracking for values that were interacting with the templating layer. This has allowed us to ensure that it is possible to model the vast majority of Ember's change tracking semantics with the new system. What this means in practice is that all of Ember's existing APIs can be interleaved with tracked properties. For instance:
+
+```hbs
+{{! app/templates/application.hbs }}
+
+<MyParent @firstName={{this.model.firstName}} @lastName={{this.model.lastName}} as |fullName|>
+  <MyChild @fullName={{fullName}}>
+</MyParent>
+```
+
+Where `MyParent` is using computed properties like:
+
+```js
+// app/components/my-parent.js
+
+import { computed } from '@ember/object';
+import Component from '@ember/component';
+
+export default Component.extend({
+  fullName: computed('firstName', 'lastName', function() {
+    return `${this.firstName} ${this.lastName}`;
+  });
+})
+```
+
+```hbs
+{{! app/templates/components/my-parent.hbs}}
+{{yield this.fullName}}
+```
+
+And where `MyChild` is using tracked properties like:
+
+```js
+// app/components/my-parent.js
+
+import { tracked } from '@ember/object';
+import Component from '@ember/component';
+
+export default class extends Component {
+  @tracked get greeting() {
+    return `Hello ${this.fullName}!`;
+  }
+}
+```
+
+```hbs
+{{! app/templates/components/my-parent.hbs}}
+{{this.greeting}}
+```
 
 ## How we teach this
 
+Tracked properties are intended to simplify the programming model by removing concepts. For instance people familiar with JavaScript do not need to learn a propritary setter method for updating data. They also don't need to learn about dependent keys and remembering to properly enumerate them. By in large this should reduce the amount of concepts that we need to teach.
 
-> How should this feature be introduced and taught to existing Ember
-users?
+It also allows us to redirect people things like Mozilla's documentation if people are not familiar with things like accessor methods.
 
 ## Drawbacks
 
-> Why should we *not* do this? Please consider the impact on teaching Ember,
-on the integration of this feature with other existing and planned features,
-on the impact of the API churn on existing apps, etc.
-
-> There are tradeoffs to choosing any path, please attempt to identify them here.
+With tracked properties we are giving up some fine grained control over observing when data has changed for array mutations. As noted in the design section, arrays would need to use a immutable pattern for having their changes reflected through out the system.
 
 ## Alternatives
 
